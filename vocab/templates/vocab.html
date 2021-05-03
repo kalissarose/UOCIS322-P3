@@ -77,28 +77,54 @@
                   <label for="attempt">Word:</label>
                   <input id="attempt" name="attempt" type="text" width="15"
                      autocomplete="off"  autofocus />
-                  <input type="submit" name="try" />
+                  <!-- input type="submit" name="try" / -->
                </form>
             </div>
          </div>
          <br />
-         {% if session.matches|length is not equalto 0  %}
+         <p id="message" style="color:red"></p>
          <h2>You found </h2>
-         <p id="results">
-            {% for match in session.matches %}
-            {{ match }}
-            {% endfor %}
-         </p>
-         {% endif %}
-         {% with messages = get_flashed_messages() %}
-         {% if messages %}
-         <!-- Mismatch, already found, etc. "flashed" from Python -->
-         {% for message in messages %}
-         <p class="message">{{ message }}</p>
-         {% endfor %}
-         {% endif %}
-         {% endwith %}
+         <p id="results"></p>
+         <script>
+            $("#entry").submit( function(event) {
+               event.preventDefault();
+              });
+            $("#attempt").keyup(function(event) {
+               var txt = $("#attempt").val();  // Current content of the input field
+
+               $.getJSON( "/_check", { text: txt },
+                  function(data) {
+                     in_matches = data.result.in_matches;
+                     matched = data.result.matched;
+                     in_jumble = data.result.in_jumble;
+                     complete = data.result.complete;
+                     txt_input = data.result.txt_input;
+                     console.log(txt_input);
+                     $("#message").html("");
+
+                     if (complete) {
+                        window.location.href = "/success";
+                        return;
+                     }
+                     if (in_jumble && matched && !(in_matches)) {
+                        $("#results").html(txt_input);
+                        $("#attempt").val("");
+                     }
+                     else if (in_matches) {
+                        $("#message").html("You already found " + txt);
+                     }
+                     else if (!matched) {
+                        $("#message").html(txt + " isn't in the list of words");
+                     } 
+                     else if (!in_jumble) {
+                        $("#message").html(txt + " can't be made from the letters"); 
+                     }
+                  }
+                  );
+               });
+         </script>
       </div>
       <!-- container -->
    </body>
 </html>
+
